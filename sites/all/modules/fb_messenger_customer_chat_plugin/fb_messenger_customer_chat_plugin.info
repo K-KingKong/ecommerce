@@ -1,0 +1,14 @@
+name = Facebook Messenger Customer Chat Plugin
+description = Adds Facebook Messenger Chat Plugin to the site.
+core = 7.x
+package = Facebook Messenger
+
+configure = admin/fb-messenger/customer-chat-plugin
+
+
+; Information added by Drupal.org packaging script on 2017-12-01
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "fb_messenger_customer_chat_plugin"
+datestamp = "1512143295"
+

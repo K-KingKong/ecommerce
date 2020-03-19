@@ -1,0 +1,123 @@
+<?php
+
+/**
+ * @file
+ * Facebook Messenger Customer Chat Plugin module.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function fb_messenger_customer_chat_plugin_menu() {
+  $items = array();
+
+  $items['admin/fb-messenger/customer-chat-plugin'] = [
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('facebook_messenger_customer_chat_plugin_admin_form'),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  ];
+
+  return $items;
+}
+
+/**
+ * Implements hook_page_build().
+ */
+function fb_messenger_customer_chat_plugin_page_build(&$page) {
+  $template_variables = [
+    'page_id' => variable_get('fb_messenger_page_id', NULL),
+    'optional_webhook_parameter' => variable_get('fb_messenger_optional_webhook_parameter', NULL),
+    'minimized' => variable_get('fb_messenger_mininimized', TRUE) ? 'true' : 'false'
+  ];
+
+  $page['content']['fb_messenger_customer_chat_plugin'] = [
+    '#markup' => theme('fb_messenger_customer_chat_template', $template_variables),
+    '#weight' => 25,
+	];
+}
+
+/**
+ * Implements hook_theme().
+ */
+function fb_messenger_customer_chat_plugin_theme() {
+  $themes = [
+    'fb_messenger_customer_chat_template' => [
+      'template' => 'fb-messenger-customer-chat-plugin',
+      'arguments' => [
+        'page_id' => NULL,
+        'optional_webhook_parameter' => NULL,
+        'minimized' => 'true'
+      ],
+    ],
+    'fb_messenger_js_sdk_template' => [
+      'template' => 'fb-messenger-customer-chat-plugin-js-sdk',
+      'arguments' => [
+        'app_id' => NULL,
+      ],
+    ],
+  ];
+  return $themes;
+}
+
+function facebook_messenger_customer_chat_plugin_admin_form($form, &$form_state) {
+  $form['fb_messenger_page_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Facebook Page ID'),
+    '#default_value' => variable_get('fb_messenger_page_id', NULL),
+    '#size' => 100,
+    '#maxlength' => 100,
+    '#description' => t('You Facebook Page ID'),
+  );
+
+  $form['fb_messenger_optional_webhook_parameter'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Optional Webhook Parameter'),
+    '#default_value' => variable_get('fb_messenger_optional_webhook_parameter', NULL),
+    '#size' => 100,
+    '#maxlength' => 100,
+  );
+
+  $form['fb_messenger_mininimized'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Facebook Messenger is minimized'),
+    '#default_value' => variable_get('fb_messenger_mininimized', TRUE),
+  );
+
+  $form['fb_messenger_include_javascript_sdk'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include Javascript SDK'),
+    '#default_value' => variable_get('fb_messenger_include_javascript_sdk', TRUE),
+  );
+
+  $form['fb_messenger_app_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('App Id'),
+    '#default_value' => variable_get('fb_messenger_app_id', NULL),
+    '#description' => t('Add App ID if Javascript SDK is included.'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_page_alter().
+ *
+ * Adds a post_render callback
+ */
+function fb_messenger_customer_chat_plugin_page_alter(&$page) {
+  if (variable_get('fb_messenger_include_javascript_sdk', TRUE)) {
+    $page['#post_render'][] = 'fb_messenger_customer_chat_plugin_add_js_sdk';
+  }
+}
+
+/**
+ * Implements callback_post_render().
+ *
+ * Inserts JavaScript snippet immediately after the opening body tag.
+ */
+function fb_messenger_customer_chat_plugin_add_js_sdk(&$children, $elements) {
+  $script =  theme('fb_messenger_js_sdk_template', ['app_id' => variable_get('fb_messenger_app_id', NULL),]);
+  $children = preg_replace('@<body[^>]*>@', '$0' . $script, $children, 1);
+  return $children;
+}
